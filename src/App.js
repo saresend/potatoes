@@ -1,6 +1,7 @@
 import React from "react";
 import * as d3 from "d3";
 import "./App.css";
+import styled from "styled-components";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 
 function App() {
@@ -9,21 +10,19 @@ function App() {
   const projection = d3
     .geoMercator()
     .center([120, 23])
-    .scale([500])
-    .translate([550, 550])
+    .scale([450])
+    .translate([515, 550])
     .precision([0.1]);
   return (
-    <div>
-      <ComposableMap projection={projection}>
-        <Geographies geography={geoURL}>
-          {({ geographies }) =>
-            geographies.map((geo) => (
-              <Geography key={geo.rsmKey} geography={geo} />
-            ))
-          }
-        </Geographies>
-      </ComposableMap>
-    </div>
+    <ComposableMap projection={projection}>
+      <Geographies geography={geoURL}>
+        {({ geographies }) =>
+          geographies.map((geo) => (
+            <Geography key={geo.rsmKey} geography={geo} />
+          ))
+        }
+      </Geographies>
+    </ComposableMap>
   );
 }
 
