@@ -1,24 +1,28 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import * as d3 from "d3";
+import "./App.css";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 
 function App() {
+  const geoURL =
+    "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/china/china-provinces.json";
+  const projection = d3
+    .geoMercator()
+    .center([120, 23])
+    .scale([500])
+    .translate([550, 550])
+    .precision([0.1]);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <ComposableMap projection={projection}>
+        <Geographies geography={geoURL}>
+          {({ geographies }) =>
+            geographies.map((geo) => (
+              <Geography key={geo.rsmKey} geography={geo} />
+            ))
+          }
+        </Geographies>
+      </ComposableMap>
     </div>
   );
 }
