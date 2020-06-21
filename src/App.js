@@ -53,6 +53,7 @@ function App() {
     "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/china/china-provinces.json";
 	const [ sweetPotatoData, setSweetPotatoData ] = useState();
 	const [ cornData, setCornData ] = useState();
+	const [ isPotatoData, setPotatoData ] = useState(true);
 	const [ yearThreshold, setYearThreshold ] = useState([1600]);
 
 	useEffect(() => {
@@ -61,16 +62,23 @@ function App() {
 		});
 	}, []);
 
-	const [yearMin, yearMax] = computeMinMax(sweetPotatoData);
+	useEffect(() => {
+		d3.csv("corn_data.csv").then((data) => {
+			setCornData(data);
+		});
+	}, []);
+	const currDataset = isPotatoData ? sweetPotatoData : cornData;
+
+	const [yearMin, yearMax] = computeMinMax(currDataset);
 	const [tooltipContent, setTooltipContent] = useState("");
 
   return (
 		<Container>
 		<Heading>
-		<Title> <CenterText> Potato Data - Visualized tho </CenterText></Title>
+		<Title><CenterText> Potato Data - Visualized tho </CenterText></Title>
 		</Heading>
 			<Range
-        step={10}
+        step={5}
         min={yearMin}
         max={yearMax}
         values={yearThreshold}
@@ -110,7 +118,7 @@ function App() {
       <Geographies geography={geoURL}>
         {({ geographies }) =>
           geographies.map((geo) => {
-						const isReferenced = isReferencedInDataset(geo, sweetPotatoData, yearThreshold);
+						const isReferenced = isReferencedInDataset(geo, currDataset, yearThreshold);
             return (
               <Geography
                 fill={colorScale(isReferenced)}
