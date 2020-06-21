@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { Range } from 'react-range';
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import ReactTooltip from 'react-tooltip';
+import Select from 'react-select';
 
 function isReferencedInDataset(geo, sweetPotatoData, yearThreshold) {
 	const threshold = yearThreshold[0];
@@ -30,10 +31,9 @@ function computeMinMax(sweetPotatoData) {
 	}
 	const yearList = sweetPotatoData.map((x) => parseInt(x.Year));
 
-	console.log(yearList);
 	const min_value = Math.min(...yearList);
 	const max_value = Math.max(...yearList);
-	console.log(min_value, max_value);
+
 	return [min_value - 30, max_value + 30];
 }
   const projection = d3
@@ -47,13 +47,17 @@ function computeMinMax(sweetPotatoData) {
     .domain([0, 2])
     .range(["#ffedea", "#ff5233"]);
 
+const dataOptions = [ {
+	value: 'sweetPotato', label: 'Sweet Potato'
+}, { value: 'corn', label: 'Corn' }];
+
 
 function App() {
   const geoURL =
     "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/china/china-provinces.json";
 	const [ sweetPotatoData, setSweetPotatoData ] = useState();
 	const [ cornData, setCornData ] = useState();
-	const [ isPotatoData, setPotatoData ] = useState(true);
+	const [ isPotatoData, setIsPotatoData ] = useState(true);
 	const [ yearThreshold, setYearThreshold ] = useState([1600]);
 
 	useEffect(() => {
@@ -77,7 +81,14 @@ function App() {
 		<Heading>
 		<Title><CenterText> Potato Data - Visualized tho </CenterText></Title>
 		</Heading>
-			<Range
+		<SelectionContainer>
+			<Select options={dataOptions}
+				onChange={(selectedOption) => {
+					setIsPotatoData(selectedOption.value === 'sweetPotato');
+				}}
+		/> 
+		</SelectionContainer>
+			<Range 
         step={5}
         min={yearMin}
         max={yearMax}
@@ -139,6 +150,13 @@ function App() {
 		</Container>
   );
 }
+
+const SelectionContainer = styled.div`
+	padding: 20px;
+	padding-bottom: 50px;
+	width: 400px;
+
+`;
 
 const Title = styled.div`
  display: flex;
