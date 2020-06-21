@@ -5,15 +5,18 @@ import { scaleLinear } from "d3-scale";
 import styled from "styled-components";
 import { Range } from 'react-range';
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import ReactTooltip from 'react-tooltip';
 
-function isReferencedInDataset(geo, sweetPotatoData) {
+function isReferencedInDataset(geo, sweetPotatoData, yearThreshold) {
+	const threshold = yearThreshold[0];
+	console.log("At year: ", threshold);
 	if(!sweetPotatoData) {
 		return 0;
 	}
 	var total = 0;
 	const cmpString = geo.properties.NAME_1;
 	for(var i = 0; i < sweetPotatoData.length; ++i) {
-		if(sweetPotatoData[i].Province === cmpString) {
+		if(sweetPotatoData[i].Province === cmpString && sweetPotatoData[i].Year <= threshold) {
 			total = 1;
 			break;
 		}
@@ -21,47 +24,55 @@ function isReferencedInDataset(geo, sweetPotatoData) {
 	return total;
 }
 
-function App() {
-  const geoURL =
-    "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/china/china-provinces.json";
+function computeMinMax(sweetPotatoData) {
+	if(!sweetPotatoData) {
+		return [1000, 2000];
+	}
+	const yearList = sweetPotatoData.map((x) => parseInt(x.Year));
+
+	console.log(yearList);
+	const min_value = Math.min(...yearList);
+	const max_value = Math.max(...yearList);
+	console.log(min_value, max_value);
+	return [min_value - 30, max_value + 30];
+}
   const projection = d3
     .geoMercator()
-    .center([90, 23])
-    .scale([750])
+    .center([70, 23])
+    .scale([780])
     .translate([515, 550])
     .precision([0.1]);
-
-	const [ sweetPotatoData, setSweetPotatoData ] = useState();
-	const [ cornData, setCornData ] = useState();
-	const [ yearThreshold, setYearThreshold ] = useState([0]);
-
-	useEffect(() => {
-		d3.csv("potato_data.csv").then((data) => {
-			setSweetPotatoData(data);
-		});
-	}, []);
-
-	useEffect(() => {
-		d3.csv("potato_data.csv").then((data) => {
-			setSweetPotatoData(data);
-		});
-	}, []);
-		
 
   const colorScale = scaleLinear()
     .domain([0, 2])
     .range(["#ffedea", "#ff5233"]);
+
+
+function App() {
+  const geoURL =
+    "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/china/china-provinces.json";
+	const [ sweetPotatoData, setSweetPotatoData ] = useState();
+	const [ cornData, setCornData ] = useState();
+	const [ yearThreshold, setYearThreshold ] = useState([1600]);
+
+	useEffect(() => {
+		d3.csv("potato_data.csv").then((data) => {
+			setSweetPotatoData(data);
+		});
+	}, []);
+
+	const [yearMin, yearMax] = computeMinMax(sweetPotatoData);
+	const [tooltipContent, setTooltipContent] = useState("");
 
   return (
 		<Container>
 		<Heading>
 		<Title> <CenterText> Potato Data - Visualized tho </CenterText></Title>
 		</Heading>
-
 			<Range
-        step={0.1}
-        min={0}
-        max={100}
+        step={10}
+        min={yearMin}
+        max={yearMax}
         values={yearThreshold}
         onChange={values => setYearThreshold(values)}
         renderTrack={({ props, children }) => (
@@ -71,7 +82,7 @@ function App() {
               ...props.style,
               height: '6px',
               width: '50%',
-              backgroundColor: '#ccc'
+              backgroundColor: '#eee'
             }}
           >
             {children}
@@ -82,35 +93,54 @@ function App() {
             {...props}
             style={{
               ...props.style,
-              height: '42px',
-              width: '42px',
-              backgroundColor: '#999'
+              height: '30px',
+              width: '30px',
+							borderWidth: '3px',
+							borderStyle: 'solid',
+							borderRadius: '30px',
+							borderColor: "#ffb4a2", 
+							stroke: '#ffb4a2',
+              backgroundColor: '#ffffff'
             }}
           />
         )}
       />
+		<SliderInfo> Current Year: {yearThreshold[0]} </SliderInfo>
     <ComposableMap projection={projection} width={window.innerWidth} height={600}>
       <Geographies geography={geoURL}>
         {({ geographies }) =>
           geographies.map((geo) => {
-						const isReferenced = isReferencedInDataset(geo, sweetPotatoData);
+						const isReferenced = isReferencedInDataset(geo, sweetPotatoData, yearThreshold);
             return (
               <Geography
                 fill={colorScale(isReferenced)}
                 key={geo.rsmKey}
                 geography={geo}
+								onMouseEnter={() => {
+										const {NAME_1} = geo.properties;
+										console.log(NAME_1);
+										setTooltipContent(`Region: ${NAME_1}`);
+								}}
               />
             );
           })
         }
       </Geographies>
     </ComposableMap>
+		<ReactTooltip>{tooltipContent}</ReactTooltip>
 		</Container>
   );
 }
 
 const Title = styled.div`
  display: flex;
+`;
+
+const SliderInfo = styled.div`
+	margin: 30px;
+	font-size: 30px;
+	font-color: darkgrey;
+
 `;
 
 const CenterText = styled.p`
